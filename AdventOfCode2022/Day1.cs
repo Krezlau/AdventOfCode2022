@@ -4,9 +4,9 @@ using System.Reflection;
 
 namespace AdventOfCode2022
 {
-    internal class Day1
+    public class Day1
     {
-        static void Main(string[] args)
+        public static void Solve()
         {
             string path = Path.Combine(Environment.CurrentDirectory, "data\\day1.txt");
 
