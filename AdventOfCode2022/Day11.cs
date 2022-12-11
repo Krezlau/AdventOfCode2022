@@ -11,7 +11,7 @@ namespace AdventOfCode2022
     {
         private class Monkey
         {
-            public Monkey(Func<long, long> operation, long testValue, int ifTrue, int ifFalse)
+            public Monkey(Func<long, long> operation, int testValue, int ifTrue, int ifFalse)
             {
                 Operation = operation;
                 TestValue = testValue;
@@ -21,11 +21,10 @@ namespace AdventOfCode2022
 
             public List<long> Items { get; set; } = new List<long>();
             public Func<long, long> Operation { get; set; }
-            public long TestValue { get; set; }
+            public int TestValue { get; set; }
             public int ifTrue { get; set; }
             public int ifFalse { get; set; }
             public long InspectionCount { get; set; }
-            public bool ifAddition { get; set; } = false;
         }
 
         public static void Solve()
@@ -51,8 +50,8 @@ namespace AdventOfCode2022
                 string[] itemsLine = data[i + 1].Replace(",", "").Split(" ");
                 for (int j = 4; j < itemsLine.Length; j++)
                 {
-                    items.Add(long.Parse(itemsLine[j]));
-                    items2.Add(long.Parse(itemsLine[j]));
+                    items.Add(int.Parse(itemsLine[j]));
+                    items2.Add(int.Parse(itemsLine[j]));
                 }
 
                 string[] operation = data[i + 2].Split(" ");
@@ -65,8 +64,8 @@ namespace AdventOfCode2022
                     }
                     else
                     {
-                        monkeys.Add(new Monkey((old) => old * long.Parse(operation[7]), testval, iftrue, iffalse));
-                        monkeys2.Add(new Monkey((old) => old * long.Parse(operation[7]), testval, iftrue, iffalse));
+                        monkeys.Add(new Monkey((old) => old * int.Parse(operation[7]), testval, iftrue, iffalse));
+                        monkeys2.Add(new Monkey((old) => old * int.Parse(operation[7]), testval, iftrue, iffalse));
                     }
                 }
                 if (operation[6] == "+")
@@ -75,28 +74,39 @@ namespace AdventOfCode2022
                     {
                         monkeys.Add(new Monkey((old) => old + old, testval, iftrue, iffalse));
                         monkeys2.Add(new Monkey((old) => old + old, testval, iftrue, iffalse));
-                        monkeys2[^1].ifAddition = true;
                     }
                     else
                     {
-                        monkeys.Add(new Monkey((old) => old + long.Parse(operation[7]), testval, iftrue, iffalse));
-                        monkeys2.Add(new Monkey((old) => old + long.Parse(operation[7]), testval, iftrue, iffalse));
-                        monkeys2[^1].ifAddition = true;
+                        monkeys.Add(new Monkey((old) => old + int.Parse(operation[7]), testval, iftrue, iffalse));
+                        monkeys2.Add(new Monkey((old) => old + int.Parse(operation[7]), testval, iftrue, iffalse));
                     }
                 }
                 monkeys[^1].Items = items;
                 monkeys2[^1].Items = items2;
             }
 
+            int divider = 1;
+            foreach (Monkey monkey in monkeys2)
+            {
+                divider *= monkey.TestValue;
+            }
+            Console.WriteLine(PlayRounds(monkeys, 20, (old) => old / 3));
+            Console.WriteLine(PlayRounds(monkeys2, 10000, (old) => old % divider));
 
-            for (int i = 0; i < 20; i++)
+        }
+
+        private static long PlayRounds(List<Monkey> monkeys, int numberOfRounds, Func<long, long> worryReducer)
+        {
+            for (int i = 0; i < numberOfRounds; i++)
             {
                 foreach (Monkey monkey in monkeys)
                 {
                     while (monkey.Items.Count != 0)
                     {
                         long item = monkey.Items[0];
-                        long newVal = monkey.Operation(item) / 3;
+                        long newVal = monkey.Operation(item);
+                        newVal = worryReducer(newVal);
+
                         if (newVal % monkey.TestValue == 0)
                         {
                             monkey.Items.Remove(item);
@@ -117,50 +127,9 @@ namespace AdventOfCode2022
             {
                 inspections.Add(monkey.InspectionCount);
             }
-            long divider = 1;
-            foreach (Monkey monkey in monkeys2)
-            {
-                divider *= monkey.TestValue;
-            }
             inspections.Sort();
-            Console.WriteLine(inspections[^1] * inspections[^2]);
-
-            for (int i = 0; i < 10000; i++)
-            {
-                foreach (Monkey monkey in monkeys2)
-                {
-                    while (monkey.Items.Count != 0)
-                    {
-                        long item = monkey.Items[0];
-                        long newVal = monkey.Operation(item);
-                        if (!monkey.ifAddition)
-                        {
-                            newVal = newVal % divider;
-                        }
-                        
-                        if (newVal % monkey.TestValue == 0)
-                        {
-                            monkey.Items.Remove(item);
-                            monkeys2[monkey.ifTrue].Items.Add(newVal);
-                        }
-                        else
-                        {
-                            monkey.Items.Remove(item);
-                            monkeys2[monkey.ifFalse].Items.Add(newVal);
-                        }
-                        monkey.InspectionCount++;
-                    }
-                }
-            }
-
-            inspections = new List<long>();
-            foreach (Monkey monkey in monkeys2)
-            {
-                inspections.Add(monkey.InspectionCount);
-            }
-
-            inspections.Sort();
-            Console.WriteLine(inspections[^1] * inspections[^2]);
+            
+            return inspections[^1] * inspections[^2];
         }
     }
 }
