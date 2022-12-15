@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -31,6 +32,32 @@ namespace AdventOfCode2022
             public int CalculateDist(int x, int y)
             {
                 return Math.Abs(X - x) + Math.Abs(Y - y);
+            }
+
+            public void CollectPointsToCheck(List<(int x, int y)> points)
+            {
+                (int x, int y) point = (X - BeaconDist - 1, Y);
+                points.Add(point);
+                while (point.x != X)
+                {
+                    point = (point.x + 1, point.y + 1);
+                    points.Add(point);
+                }
+                while (point.y != Y)
+                {
+                    point = (point.x + 1, point.y - 1);
+                    points.Add(point);
+                }
+                while (point.x != X)
+                {
+                    point = (point.x - 1, point.y - 1);
+                    points.Add(point);
+                }
+                while (point.y != Y)
+                {
+                    point = (point.x - 1, point.y + 1);
+                    points.Add(point);
+                }
             }
     }
 
@@ -109,7 +136,7 @@ namespace AdventOfCode2022
                 }
             }
 
-            //Console.WriteLine(sum);
+            Console.WriteLine(sum);
             //for (int i = -5; i < 30; i++)
             //{
             //    if (set.Contains(i))
@@ -124,80 +151,112 @@ namespace AdventOfCode2022
 
             //PART 2
 
-            for (int i = 0; i <= 4000000; i++)
-            {
-                int ret = FindAllowedPointInLine(sensors, i, 0, 4000000);
-                if (ret != -1)
-                {
-                    Console.WriteLine(ret);
-                    BigInteger outcome = ret * 4;
-                    BigInteger mod = outcome % 10;
-                    outcome = outcome / 10;
-                    i += (int)mod * 1000000;
-                    Console.WriteLine($"{outcome}{i}");
-                    break;
-                }
-                Console.WriteLine(i);
-            }
-        }
+            // original solution
 
-        private static int FindAllowedPointInLine(List<Sensor> sensors, int row, int upperBoundX, int lowerBoundX)
-        {
-            List<(int x1, int x2)> illegalRanges = new List<(int x1, int x2)>();
+            //for (int i = 0; i <= 4000000; i++)
+            //{
+            //    int ret = FindAllowedPointInLine(sensors, i, 0, 4000000);
+            //    if (ret != -1)
+            //    {
+            //        Console.WriteLine(ret);
+            //        BigInteger outcome = ret * 4;
+            //        BigInteger mod = outcome % 10;
+            //        outcome = outcome / 10;
+            //        i += (int)mod * 1000000;
+            //        Console.WriteLine($"{outcome}{i}");
+            //        break;
+            //    }
+            //    Console.WriteLine(i);
+            //}
+
+            // improved solution
+            List<(int x, int y)> pointsToCheck = new List<(int x, int y)>();
             foreach (Sensor sensor in sensors)
             {
-                int distance = sensor.CalculateDist(sensor.X, row);
-                if (distance > sensor.BeaconDist) continue;
-
-                illegalRanges.Add((sensor.X - (sensor.BeaconDist - distance), sensor.X + (sensor.BeaconDist - distance)));
+                sensor.CollectPointsToCheck(pointsToCheck);
             }
+            pointsToCheck = pointsToCheck.Where(point => point.x <= 4000000 && point.y <= 4000000 && point.x >= 0 && point.y >=0).ToList();
 
-            while (illegalRanges.Count > 2)
+            foreach ((int x, int y) point in pointsToCheck)
             {
-                var rangeOne = illegalRanges[0];
-                illegalRanges.RemoveAt(0);
-                (int x1, int x2) rangeTwo;
-                for (int i = 0; i < illegalRanges.Count; i++)
+                bool ifGood = true;
+                foreach (Sensor sensor in sensors)
                 {
-                    rangeTwo = illegalRanges[i];
-                    if (!(rangeOne.x2 < rangeTwo.x1 - 1 || rangeTwo.x2 < rangeOne.x1 - 1))
+                    if (sensor.CalculateDist(point.x, point.y) <= sensor.BeaconDist)
                     {
-                        illegalRanges.RemoveAt(i);
-                        int x1;
-                        int x2;
-                        if (rangeOne.x1 < rangeTwo.x1) x1 = rangeOne.x1;
-                        else x1 = rangeTwo.x1;
-
-                        if (rangeOne.x2 > rangeTwo.x2) x2 = rangeOne.x2;
-                        else x2 = rangeTwo.x2;
-
-                        illegalRanges.Add((x1, x2));
+                        ifGood = false;
                         break;
                     }
                 }
+                if (ifGood)
+                {
+                    BigInteger outcome = point.x * 4;
+                    BigInteger mod = outcome % 10;
+                    outcome = outcome / 10;
+                    int y = point.y + (int)mod * 1000000;
+                    Console.WriteLine($"{outcome}{y}");
+                    break;
+                }
             }
-            var rangeUno = illegalRanges[0];
-            var rangeDos = illegalRanges[1];
-
-            if (!(rangeUno.x2 < rangeDos.x1 - 1 || rangeDos.x2 < rangeUno.x1 - 1))
-            {
-                int x1;
-                int x2;
-                if (rangeUno.x1 < rangeDos.x1) x1 = rangeUno.x1;
-                else x1 = rangeDos.x1;
-
-                if (rangeUno.x2 > rangeDos.x2) x2 = rangeUno.x2;
-                else x2 = rangeDos.x2;
-
-                var range = (x1, x2);
-
-                if (range.x1 > lowerBoundX) return lowerBoundX;
-                if (range.x2 < upperBoundX) return upperBoundX;
-                return -1;
-            }
-
-            if (rangeUno.x2 < rangeDos.x1) return rangeUno.x2 + 1;
-            return rangeDos.x2 + 1;
         }
+
+        //private static int FindAllowedPointInLine(List<Sensor> sensors, int row, int upperBoundX, int lowerBoundX)
+        //{
+        //    List<(int x1, int x2)> illegalRanges = new List<(int x1, int x2)>();
+        //    foreach (Sensor sensor in sensors)
+        //    {
+        //        int distance = sensor.CalculateDist(sensor.X, row);
+        //        if (distance > sensor.BeaconDist) continue;
+
+        //        illegalRanges.Add((sensor.X - (sensor.BeaconDist - distance), sensor.X + (sensor.BeaconDist - distance)));
+        //    }
+
+        //    while (illegalRanges.Count > 2)
+        //    {
+        //        var rangeOne = illegalRanges[0];
+        //        illegalRanges.RemoveAt(0);
+        //        (int x1, int x2) rangeTwo;
+        //        for (int i = 0; i < illegalRanges.Count; i++)
+        //        {
+        //            rangeTwo = illegalRanges[i];
+        //            if (!(rangeOne.x2 < rangeTwo.x1 - 1 || rangeTwo.x2 < rangeOne.x1 - 1))
+        //            {
+        //                illegalRanges.RemoveAt(i);
+        //                int x1;
+        //                int x2;
+        //                if (rangeOne.x1 < rangeTwo.x1) x1 = rangeOne.x1;
+        //                else x1 = rangeTwo.x1;
+
+        //                if (rangeOne.x2 > rangeTwo.x2) x2 = rangeOne.x2;
+        //                else x2 = rangeTwo.x2;
+
+        //                illegalRanges.Add((x1, x2));
+        //                break;
+        //            }
+        //        }
+        //    }
+        //    var rangeUno = illegalRanges[0];
+        //    var rangeDos = illegalRanges[1];
+
+        //    if (!(rangeUno.x2 < rangeDos.x1 - 1 || rangeDos.x2 < rangeUno.x1 - 1))
+        //    {
+        //        int x1;
+        //        int x2;
+        //        if (rangeUno.x1 < rangeDos.x1) x1 = rangeUno.x1;
+        //        else x1 = rangeDos.x1;
+
+        //        if (rangeUno.x2 > rangeDos.x2) x2 = rangeUno.x2;
+        //        else x2 = rangeDos.x2;
+
+        //        var range = (x1, x2);
+
+        //        if (range.x1 > lowerBoundX) return lowerBoundX;
+        //        if (range.x2 < upperBoundX) return upperBoundX;
+        //        return -1;
+        //    }
+
+        //    if (rangeUno.x2 < rangeDos.x1) return rangeUno.x2 + 1;
+        //    return rangeDos.x2 + 1;
+        //}
     }
 }
