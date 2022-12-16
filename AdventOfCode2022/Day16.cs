@@ -9,8 +9,25 @@ namespace AdventOfCode2022
 {
     public class Day16
     {
-        private class Valve
+        private class State
         {
+            public State(Valve current, int flow, int minute, List<string> openedValves, Valve? goTo)
+            {
+                Current = current;
+                Flow = flow;
+                Minute = minute;
+                OpenedValves = openedValves;
+                this.goTo = goTo;
+            }
+            public List<string> OpenedValves { get; }
+            public int Minute { get; }
+            public int Flow { get; }
+            public Valve Current { get; }
+            public Valve? goTo { get; }
+        }
+
+        private class Valve
+        { 
             public Valve(string iD, int pressure, List<string> connections)
             {
                 ID = iD;
@@ -35,51 +52,125 @@ namespace AdventOfCode2022
             //string[] data = "Valve AA has flow rate=0; tunnels lead to valves DD, II, BB\r\nValve BB has flow rate=13; tunnels lead to valves CC, AA\r\nValve CC has flow rate=2; tunnels lead to valves DD, BB\r\nValve DD has flow rate=20; tunnels lead to valves CC, AA, EE\r\nValve EE has flow rate=3; tunnels lead to valves FF, DD\r\nValve FF has flow rate=0; tunnels lead to valves EE, GG\r\nValve GG has flow rate=0; tunnels lead to valves FF, HH\r\nValve HH has flow rate=22; tunnel leads to valve GG\r\nValve II has flow rate=0; tunnels lead to valves AA, JJ\r\nValve JJ has flow rate=21; tunnel leads to valve II".Split("\r\n");
 
             List<Valve> valves = ParseData(data);
-
-            Valve current = valves.Where(v => v.ID == "AA").First();
-            int sum = 0;
-            int plus = 0;
-            for (int i = 30; i > 0; i--)
+            Random rd = new Random(2137);
+            int max = 0;
+            for (int iter = 0; iter >= 0; iter++)
             {
-                sum += plus;
-                Dijkstra(valves, current);
-
                 foreach (Valve v in valves)
                 {
-                    if (v.Distance == 0)
-                    {
-                        v.Distance = v.Pressure;
-                    }
-                    else
-                    {
-                        v.Distance = v.Pressure / v.Distance;
-                    }
-                    if (v.Opened)
-                    {
-                        v.Distance = 0;
-                    }
+                    v.Opened = false;
                 }
-
-                if (current.Distance == valves.Max(v => v.Distance) && !current.Opened)
+                Valve current = valves.Where(v => v.ID == "AA").First();
+                Valve previous = current;
+                int minutes = 30;
+                int pressure = 0;
+                while (minutes >= 0)
                 {
-                    plus += current.Pressure;
-                    Console.WriteLine($"opened valve {current.ID}");
-                    current.Opened = true;
-                    continue;
-                }
-                Valve goTo = valves.Where(v => v.Distance == valves.Max(v => v.Distance)).First();
-                if (goTo.Preceding != current)
-                {
-                    while (true)
+                    if (!current.Opened && rd.Next(0, 100) > 5 && current.Pressure > 0)
                     {
-                        goTo = goTo.Preceding;
-                        if (goTo.Preceding == current) break;
+                        minutes--;
+                        current.Opened = true;
+                        pressure += minutes * current.Pressure;
                     }
+                    List<Valve> choices = new List<Valve>();
+                    foreach (string id in current.Connections)
+                    {
+                        choices.Add(valves.Where(v => v.ID == id).First());
+                    }
+                    if (rd.Next(0, 100) > 5 && choices.Contains(previous) && choices.Count > 1)
+                    {
+                        choices.Remove(previous);
+                    }
+                    previous = current;
+                    current = choices[rd.Next(0, choices.Count)];
+                    minutes--;
                 }
-                current = goTo;
-                Console.WriteLine($"moved to valve {current.ID}");
+                if (pressure > max)
+                {
+                    max = pressure;
+                    Console.WriteLine(max);
+                }
+                if (iter % 1000 == 0) Console.WriteLine($"try: {iter} max: {max}");
             }
-            Console.WriteLine(sum);
+        }
+
+        public static void SolvePartTwo()
+        {
+            string path = Path.Combine(Environment.CurrentDirectory, "data\\day16.txt");
+
+            string[] data = File.ReadAllText(path).Split("\r\n");
+
+            //string[] data = "Valve AA has flow rate=0; tunnels lead to valves DD, II, BB\r\nValve BB has flow rate=13; tunnels lead to valves CC, AA\r\nValve CC has flow rate=2; tunnels lead to valves DD, BB\r\nValve DD has flow rate=20; tunnels lead to valves CC, AA, EE\r\nValve EE has flow rate=3; tunnels lead to valves FF, DD\r\nValve FF has flow rate=0; tunnels lead to valves EE, GG\r\nValve GG has flow rate=0; tunnels lead to valves FF, HH\r\nValve HH has flow rate=22; tunnel leads to valve GG\r\nValve II has flow rate=0; tunnels lead to valves AA, JJ\r\nValve JJ has flow rate=21; tunnel leads to valve II".Split("\r\n");
+
+            List<Valve> valves = ParseData(data);
+            Random rd = new Random(2138);
+            int max = 0;
+            for (int iter = 0; iter >= 0; iter++)
+            {
+                foreach (Valve v in valves)
+                {
+                    v.Opened = false;
+                }
+                Valve currentOne = valves.Where(v => v.ID == "AA").First();
+                Valve previousOne = currentOne;
+                Valve currentTwo = currentOne;
+                Valve previousTwo = previousOne;
+                int minutesOne = 26;
+                int minutesTwo = 26;
+                int pressure = 0;
+                while (minutesOne >= 0 || minutesTwo >= 0)
+                {
+                    if (minutesOne >= 0)
+                    {
+                        if (!currentOne.Opened && rd.Next(0, 100) > 5 && currentOne.Pressure > 0)
+                        {
+                            minutesOne--;
+                            currentOne.Opened = true;
+                            pressure += minutesOne * currentOne.Pressure;
+                        }
+                        List<Valve> choicesOne = new List<Valve>();
+                        foreach (string id in currentOne.Connections)
+                        {
+                            choicesOne.Add(valves.Where(v => v.ID == id).First());
+                        }
+                        if (rd.Next(0, 100) > 5 && choicesOne.Contains(previousOne) && choicesOne.Count > 1)
+                        {
+                            choicesOne.Remove(previousOne);
+                        }
+                        previousOne = currentOne;
+                        currentOne = choicesOne[rd.Next(0, choicesOne.Count)];
+                        minutesOne--;
+                    }
+                    if (minutesTwo >= 0)
+                    {
+                        if (!currentTwo.Opened && rd.Next(0, 100) > 5 && currentTwo.Pressure > 0)
+                        {
+                            minutesTwo--;
+                            currentTwo.Opened = true;
+                            pressure += minutesTwo * currentTwo.Pressure;
+                        }
+                        List<Valve> choicesTwo = new List<Valve>();
+                        foreach (string id in currentTwo.Connections)
+                        {
+                            choicesTwo.Add(valves.Where(v => v.ID == id).First());
+                        }
+                        if (rd.Next(0, 100) > 5 && choicesTwo.Contains(previousTwo) && choicesTwo.Count > 1)
+                        {
+                            choicesTwo.Remove(previousTwo);
+                        }
+                        previousTwo = currentTwo;
+                        currentTwo = choicesTwo[rd.Next(0, choicesTwo.Count)];
+                        minutesTwo--;
+                    }
+                    
+                }
+                if (pressure > max)
+                {
+                    max = pressure;
+                    Console.WriteLine(max);
+                }
+                if (iter % 1000 == 0) Console.WriteLine($"try: {iter} max: {max}");
+            }
         }
 
         private static List<Valve> ParseData(string[] data)
@@ -98,47 +189,6 @@ namespace AdventOfCode2022
                 valves.Add(new Valve(line_split[1], flow_rate, connections));
             }
             return valves;
-        }
-
-        private static void Dijkstra(List<Valve> valves, Valve current)
-        {
-            PriorityQueue<Valve, int> pq = new PriorityQueue<Valve, int>();
-            current.Distance = 0;
-            current.Visited = true;
-            foreach (Valve valve in valves)
-            {
-                if (valve != current)
-                {
-                    valve.Distance = 999999;
-                    valve.Visited = false;
-                }
-            }
-
-            foreach (string valve in current.Connections)
-            {
-                Valve v = valves.Where(v => v.ID == valve).First();
-                v.Distance = 1;
-                v.Preceding = current;
-                pq.Enqueue(v, v.Distance);
-            }
-            
-
-            while (pq.Count > 0)
-            {
-                current = pq.Dequeue();
-                current.Visited = true;
-                foreach (string valve in current.Connections)
-                {
-                    Valve v = valves.Where(v => v.ID == valve).First();
-                    if (current.Distance + 1 < v.Distance && v.Visited == false)
-                    {
-                        v.Distance = current.Distance + 1;
-                        v.Preceding = current;
-                        pq.Enqueue(v, v.Distance);
-                    }
-                }
-            }
-            
         }
     }
 }
