@@ -60,8 +60,11 @@ namespace AdventOfCode2022
             //Day16.Solve();
             //Day16.SolvePartTwo();
 
-            Console.WriteLine("Day 17: ");
-            Day17.Solve();
+            //Console.WriteLine("Day 17: ");
+            //Day17.Solve();
+
+            Console.WriteLine("Day 18: ");
+            Day18.Solve();
         }
     }
 }
