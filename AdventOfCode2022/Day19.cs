@@ -92,7 +92,7 @@ namespace AdventOfCode2022
                 (int ore, int clay, int obsidian, int geode) robots = (1, 0, 0, 0);
                 (int ore, int clay, int obsidian, int geode) resources = (0, 0, 0, 0);
 
-                for (int minutes = 0; minutes < 32; minutes++)
+                for (int min = 0; min < minutes; min++)
                 {
                     bool continueFlag = false;
 
