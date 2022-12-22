@@ -77,6 +77,7 @@ namespace AdventOfCode2022
 
             Console.WriteLine("Day 22: ");
             Day22.Solve();
+            Day22.SolvePartTwo();
         }
     }
 }
