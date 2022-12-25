@@ -82,11 +82,11 @@ namespace AdventOfCode2022
             //Console.WriteLine("Day 23: ");
             //Day23.Solve();
 
-            //Console.WriteLine("Day 24: ");
-            //Day24.Solve();
+            Console.WriteLine("Day 24: ");
+            Day24.Solve();
 
-            Console.WriteLine("Day 25: ");
-            Day25.Solve();
+            //Console.WriteLine("Day 25: ");
+            //Day25.Solve();
         }
     }
 }
