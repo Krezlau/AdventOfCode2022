@@ -25,6 +25,7 @@
     <None Remove="data\day22.txt" />
     <None Remove="data\day23.txt" />
     <None Remove="data\day24.txt" />
+    <None Remove="data\day25.txt" />
     <None Remove="data\day3.txt" />
     <None Remove="data\day4.txt" />
     <None Remove="data\day5.txt" />
@@ -84,6 +85,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="data\day24.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\day25.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="data\day3.txt">

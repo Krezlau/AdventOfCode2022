@@ -12,9 +12,9 @@ namespace AdventOfCode2022
         {
             string path = Path.Combine(Environment.CurrentDirectory, "data\\day24.txt");
 
-            //string[] data = File.ReadAllText(path).Split("\r\n");
+            string[] data = File.ReadAllText(path).Split("\r\n");
 
-            string[] data = "#.######\r\n#>>.<^<#\r\n#.<..<<#\r\n#>v.><>#\r\n#<^v^^>#\r\n######.#".Split("\r\n");
+            //string[] data = "#.######\r\n#>>.<^<#\r\n#.<..<<#\r\n#>v.><>#\r\n#<^v^^>#\r\n######.#".Split("\r\n");
 
             (int x1, int x2, int y1, int y2) bounds = (0, data[0].Length - 1, 0, data.Length - 1);
             (int x, int y) startingPoint = (1, 0);
@@ -39,6 +39,7 @@ namespace AdventOfCode2022
             // part two
 
             int tripBack = Simulate(endPoint, startingPoint, bounds, blizzards, answer);
+            Console.WriteLine(tripBack);
             int finalTrip = Simulate(startingPoint, endPoint, bounds, blizzards, tripBack);
             Console.WriteLine(finalTrip);
         }
@@ -127,10 +128,18 @@ namespace AdventOfCode2022
                 {
                     if (startingPoint.y == 0)
                     {
-                        pq.Enqueue((current.x, current.y + 1, current.distance + 1), ((bounds.x2 - current.x) + (bounds.y2 - current.y)) * current.distance);
+                        if (blizzardsEachMinute[current.distance + 1].Count(b => b.x == current.x && b.y == current.y + 1) == 0)
+                        {
+                            pq.Enqueue((current.x, current.y + 1, current.distance + 1), ((bounds.x2 - current.x) + (bounds.y2 - (current.y + 1))) * current.distance);
+                        }
+                        pq.Enqueue((current.x, current.y, current.distance + 1), ((bounds.x2 - current.x) + (bounds.y2 - current.y)) * current.distance);
                         continue;
                     }
-                    pq.Enqueue((current.x, current.y - 1, current.distance + 1), ((current.x) + (current.y)) * current.distance);
+                    if (blizzardsEachMinute[current.distance + 1].Count(b => b.x == current.x && b.y == current.y - 1) == 0)
+                    {
+                        pq.Enqueue((current.x, current.y - 1, current.distance + 1), ((current.x) + (current.y - 1)) * current.distance);
+                    }
+                    pq.Enqueue((current.x, current.y, current.distance + 1), ((current.x) + (current.y)) * current.distance);
                     continue;
                 }
 
@@ -145,11 +154,11 @@ namespace AdventOfCode2022
                         {
                             if (startingPoint.y == 0)
                             {
-                                pq.Enqueue((current.x + 1, current.y, current.distance + m), ((bounds.x2 - current.x) + (bounds.y2 - current.y)) * current.distance);
+                                pq.Enqueue((current.x + 1, current.y, current.distance + m), ((bounds.x2 - (current.x + 1)) + (bounds.y2 - current.y)) * current.distance);
 
                             } else
                             {
-                                pq.Enqueue((current.x + 1, current.y, current.distance + m), ((current.x) + (current.y)) * current.distance);
+                                pq.Enqueue((current.x + 1, current.y, current.distance + m), ((current.x + 1) + (current.y)) * current.distance);
                             }
                             visited.Add((current.x + 1, current.y, current.distance + m));
                         }
@@ -162,26 +171,26 @@ namespace AdventOfCode2022
                         {
                             if (startingPoint.y == 0)
                             {
-                                pq.Enqueue((current.x - 1, current.y, current.distance + m), ((bounds.x2 - current.x) + (bounds.y2 - current.y)) * current.distance);
+                                pq.Enqueue((current.x - 1, current.y, current.distance + m), ((bounds.x2 - (current.x - 1)) + (bounds.y2 - current.y)) * current.distance);
                             } else
                             {
-                                pq.Enqueue((current.x - 1, current.y, current.distance + m), ((current.x) + (current.y)) * current.distance);
+                                pq.Enqueue((current.x - 1, current.y, current.distance + m), ((current.x - 1) + (current.y)) * current.distance);
                             }
                             visited.Add((current.x - 1, current.y, current.distance + m));
                         }
                     }
                     if (visited.Count(d => d.x == current.x && d.y == current.y + 1 && d.minute == current.distance + 1) < 1
                     && blizzardsEachMinute[current.distance + m].Count(b => b.x == current.x && b.y == current.y + 1) == 0
-                    && (current.y + 1 < bounds.y2 || (current.y + 1 == endingPoint.y && current.x == endingPoint.x) || (current.y + 1 == startingPoint.y && current.x == startingPoint.x)))
+                    && (current.y + 1 < bounds.y2 || (current.y + 1 == endingPoint.y && current.x == endingPoint.x) || ((current.y + 1 == startingPoint.y && current.x == startingPoint.x) && visited.Count(d => d.x == startingPoint.x && d.y == startingPoint.y) < 10)))
                     {
                         if (current.distance + 1 < min)
                         {
                             if (startingPoint.y == 0)
                             {
-                                pq.Enqueue((current.x, current.y + 1, current.distance + m), ((bounds.x2 - current.x) + (bounds.y2 - current.y)) * current.distance);
+                                pq.Enqueue((current.x, current.y + 1, current.distance + m), ((bounds.x2 - current.x) + (bounds.y2 - (current.y + 1))) * current.distance);
                             } else
                             {
-                                pq.Enqueue((current.x, current.y + 1, current.distance + m), ((current.x) + (current.y)) * current.distance);
+                                pq.Enqueue((current.x, current.y + 1, current.distance + m), ((current.x) + (current.y + 1)) * current.distance);
                             }
                             if (current.y + 1 == endingPoint.y)
                             {
@@ -192,16 +201,16 @@ namespace AdventOfCode2022
                     }
                     if (visited.Count(d => d.x == current.x && d.y == current.y - 1 && d.minute == current.distance + 1) < 1
                     && blizzardsEachMinute[current.distance + m].Count(b => b.x == current.x && b.y == current.y - 1) == 0
-                    && current.y - 1 > bounds.y1 || (current.y - 1 == endingPoint.y && current.x == endingPoint.x) || (current.y + 1 == startingPoint.y && current.x == startingPoint.x))
+                    && current.y - 1 > bounds.y1 || (current.y - 1 == endingPoint.y && current.x == endingPoint.x) || ((current.y - 1 == startingPoint.y && current.x == startingPoint.x) && visited.Count(d => d.x == startingPoint.x && d.y == startingPoint.y) < 10))
                     {
                         if (current.distance + 1 < min)
                         {
                             if (startingPoint.y == 0)
                             {
-                                pq.Enqueue((current.x, current.y - 1, current.distance + m), ((bounds.x2 - current.x) + (bounds.y2 - current.y)) * current.distance);
+                                pq.Enqueue((current.x, current.y - 1, current.distance + m), ((bounds.x2 - current.x) + (bounds.y2 - (current.y - 1))) * current.distance);
                             } else
                             {
-                                pq.Enqueue((current.x, current.y - 1, current.distance + m), ((current.x) + (current.y)) * current.distance);
+                                pq.Enqueue((current.x, current.y - 1, current.distance + m), ((current.x) + (current.y - 1)) * current.distance);
                             }
                             if (current.y - 1 == endingPoint.y)
                             {
